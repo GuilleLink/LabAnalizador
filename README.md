@@ -44,6 +44,8 @@ Los contenidos de todos estos deberan ser los siguientes (en el mismo orden):
 Si todo funciono a la perfeccion podremos correr el comando antlr4 (segun la version puede ser solo antlr) y nos desplegara las opciones disponibles.
 
 Y lo siguiente es hacer que funcione con nuestra gramatica de la siguiente manera y corriendo los siguientes comandos:
-* antlr4 <gramatica>.g4
-* javac <gramatica>*.java
+* antlr4 archivo_gramatica.g4
+* javac archivo_gramatica*.java
 * grun <nombre_gramatica> <start_rule_name> <archivo_entrada> -gui 
+
+Y ya debe desplegar nuestro arbol sintactico. Para demostrarlo se pueden usar los archivos test.g4 y example.txt de este repositorio.
