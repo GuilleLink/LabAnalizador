@@ -16,11 +16,12 @@ fragment LETTER: ('A'..'Z' | 'a' .. 'z') ;
 
 //DIGIT: [0-9] ; 
 
-fragment DIGIT: '0' .. '9' ;
+fragment DIGIT: '0' .. '9';
 
-id                  : LETTER (LETTER|DIGIT)*;
-num                 : DIGIT (DIGIT)*;
-char                : LETTER;
+ID                  : LETTER (LETTER|DIGIT)*;
+NUM                 : DIGIT (DIGIT)*;
+CHAR                : LETTER;
+WS                  : [ \t\r\n]+ -> skip;
 
 program             : 'class' 'Program' '{' (declaration)* '}';
 
@@ -29,22 +30,22 @@ declaration         : structDeclaration
                     | methodDeclaration
                     ;
 
-structDeclaration   : 'struct' id '{' (varDeclaration)* '}'
+varDeclaration      : varType ID ';' 
+                    | varType ID '[' NUM ']' ';'
                     ;
 
-varDeclaration      : varType id ';' 
+structDeclaration   : 'struct' ID '{' (varDeclaration)* '}' ';'
                     ;
 
 varType             : 'int'
                     | 'boolean'
                     | 'char'
-                    | 'struct' id
+                    | 'struct' ID
+                    | structDeclaration
+                    | 'void'
                     ;
 
-location            : (id | id '[' expression ']')
-                    ;
-
-methodDeclaration   : methodType id '(' (parameter)* ')' block
+methodDeclaration   : methodType ID '(' (parameter)* ')' block
                     ;
 
 methodType          : 'int'
@@ -53,18 +54,29 @@ methodType          : 'int'
                     | 'void'
                     ;
 
-parameter           : parameterType id
+parameter           : parameterType (ID)?
+                    | parameterType ID '[' ']'
                     ;
 
 parameterType       : 'int'
                     | 'char'
                     | 'boolean'
+                    | 'void'
                     ;
 
 block               : '{' (varDeclaration)* (statement)* '}'
                     ;
 
-statement           : 'if' '(' expression ')' block ['else' block]
+statement           : 'if' '(' expression ')' block ('else' block)?
+                    | 'while' '(' expression ')' block
+                    | 'return' ( expression )? ';'
+                    | methodCall ';'
+                    | block
+                    | location '=' expression
+                    | (expression)? ';'
+                    ;
+
+location            : (ID | ID '[' expression ']') ('.' location )?
                     ;
 
 expression          : location
@@ -76,7 +88,7 @@ expression          : location
                     | '(' expression ')'
                     ;
 
-methodCall          : id '(' (arg (',')?)* ')'
+methodCall          : ID '(' (arg (',')?)* ')'
                     ;
 
 arg                 : expression
@@ -84,6 +96,8 @@ arg                 : expression
 
 op                  : arith_op
                     | eq_op
+                    | rel_op
+                    | cond_op
                     ;
 
 arith_op            : '+'
@@ -92,15 +106,25 @@ arith_op            : '+'
                     | '/'
                     ;
 
+rel_op              : '<'
+                    | '>'
+                    | '<='
+                    | '>='
+                    ;
+
 eq_op               : '=='
                     | '!='
+                    ;
+
+cond_op             : '&&'
+                    | '||'
                     ;
 
 literal             : int_literal 
                     | bool_literal
                     ;
 
-int_literal         : num
+int_literal         : NUM
                     ;
 
 bool_literal        : 'true' | 'false'
