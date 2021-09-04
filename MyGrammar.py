@@ -89,12 +89,33 @@ class DecafWalker(DecafListener):
         global numberDepth
         numberDepth -= 1
 
+    def enterMethodCall(self, ctx: DecafParser.MethodCallContext):
+        try:
+            #print(ctx.expression())
+            pass
+        except:
+            print("Data type on function ", ctx.ID() ," not valid")
+            pass
+
+    def exitMethodCall(self, ctx):
+        return super().exitMethodCall(ctx)
+
+    def enterExpression_location(self, ctx: DecafParser.Expression_locationContext):
+        try:
+            print(ctx.location().getText())
+            pass
+        except:
+            pass
+
+    def exitExpression_location(self, ctx):
+        return super().exitExpression_location(ctx)
+
     def enterStructDeclaration(self, ctx: DecafParser.StructDeclarationContext):
+        global classScope
         global actualScope
         try:
-            actualScope = ctx.ID().getText()
-            print()
-            print('ActualScope', actualScope)
+            actualScope = "struct " + ctx.ID().getText()
+            hashtable[classScope][actualScope] = {}
         except:
             pass
 
@@ -102,7 +123,10 @@ class DecafWalker(DecafListener):
         return super().exitStructDeclaration(ctx)
 
     def enterVarType_struct(self, ctx: DecafParser.VarType_structContext):
-        _name = ctx.ID().getText()
+        global classScope
+        _name = "struct " + ctx.ID().getText()
+
+        print(hashtable[classScope][_name])
 
     def enterVarDeclaration_ID(self, ctx: DecafParser.VarDeclaration_IDContext):        
         global offset
@@ -113,7 +137,10 @@ class DecafWalker(DecafListener):
             try:
                 Localoffset = offset
                 _name = ctx.ID().getText()
-                _type = ctx.varType().getText()
+                try:
+                    _type = ctx.varType().ID().getText()
+                except:
+                    _type = ctx.varType().getText()
                 Localoffset += typeTable[_type][0]
                 _defalutValue = typeTable[_type][1]
                 if(_name not in hashtable[actualScope]):
@@ -137,9 +164,9 @@ class DecafWalker(DecafListener):
         except:            
             pass
 
-
     def exitVarDeclaration_ID(self, ctx):
         return super().exitVarDeclaration_ID(ctx)
+
 
     def enterVarDeclaration_Array(self, ctx: DecafParser.VarDeclaration_ArrayContext):
         global offset
@@ -183,23 +210,34 @@ class DecafWalker(DecafListener):
     def enterStatement_return(self, ctx: DecafParser.Statement_returnContext):
         try:
             try:
-                print("Function return: ", ctx.expression().getText())
+                #Return de enteros
+                try:
+                    _returnValue = int(ctx.expression().getText())
+                    _returnValueType = "int"
+                except:
+                    _returnValue = ctx.expression().getText()
+                    for key,value in hashtable.items():
+                        #value == global variables/scopes
+                        for key2,value2 in value.items():                            
+                            try:
+                                _returnValueType = hashtable[classScope][key2][_returnValue].getType()
+                            except:
+                                pass
+                    _returnFunctionType = hashtable[classScope][actualScope][actualScope].getType()
+                    if(_returnFunctionType == _returnValueType):
+                        pass
+                    else:
+                        print("Data Type for return not valid, expected ", _returnFunctionType, " instead received ", _returnValueType)
+                        errors.append("Data Type for return not valid, expected ", _returnFunctionType, " instead received ", _returnValueType)
             except:
                 pass
-            print("Function return: ", ctx.expression().location().var_id().ID().getText())
-            print("Statement: ",ctx.expression().getText())
-            print("Statement: ",ctx.expression().literal().int_literal().getText())
+            #print("Function return: ", ctx.expression().location().var_id().ID().getText())
+            #print("Statement: ",ctx.expression().getText())
+            #print("Statement: ",ctx.expression().literal().int_literal().getText())
         except:
             pass
 
     def exitStatement_return(self, ctx):
-        pass
-
-    def enterExpression(self, ctx: DecafParser.ExpressionContext):
-        #print("Expression: ", ctx.expression())
-        pass
-
-    def exitExpression(self, ctx):
         pass
 
     def enterStatement_assignValue(self, ctx: DecafParser.Statement_assignValueContext):
@@ -275,7 +313,7 @@ class SymbolInTable():
         self.value = value
 
 def main():
-    input_stream = FileStream('fact_struct.txt')
+    input_stream = FileStream('param.txt')
     lexer = DecafLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = DecafParser(stream)

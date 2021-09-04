@@ -27,8 +27,8 @@ void OutputInt(int n)
 
 int InputInt(void)
 {
-
-	return 0;
+	int k;
+	return k;
 }
 
 }
