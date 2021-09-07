@@ -45,7 +45,6 @@ class DecafWalker(DecafListener):
         actualScope = "Program"
         classScope = "Program"
         hashtable[classScope] = {}
-        print(hashtable[classScope])
         hashtable[classScope][classScope] = SymbolInTable("Program", "void", "class", "global", None, None, None)
         '''        
         for key,value in hashtable.items():
@@ -63,27 +62,30 @@ class DecafWalker(DecafListener):
         global numberDepth
         numberDepth += 1
         LocalOffset = offset
-        _type = ctx.methodType().getText()
-        _name = ctx.ID().getText()        
-        actualScope = _name
-        _param = ctx.getChildCount()
-        _paramTypes = []
-        _paramIDS = []
-
-        for x in range(_param):
-            try:
-                if(ctx.getChild(x).ID().getText() in _paramIDS):
-                    print("Variable ", ctx.getChild(x).ID().getText(), " already previously defined in parameters")
-                    errors.append("Variable ", ctx.getChild(x).ID().getText(), " already previously defined in parameters")
-                else:
-                    _paramIDS.append(ctx.getChild(x).ID().getText())
-                _paramTypes.append(ctx.getChild(x).parameterType().getText())                
-            except:
-                pass
+        try:
+            _type = ctx.methodType().getText()
+            _name = ctx.ID().getText()        
+            actualScope = _name
+            _param = ctx.getChildCount()
+            _paramTypes = []
+            _paramIDS = []
+            for x in range(_param):
+                try:
+                    if(ctx.getChild(x).ID().getText() in _paramIDS):
+                        print("Variable ", ctx.getChild(x).ID().getText(), " already previously defined in parameters")
+                        errors.append("Variable ", ctx.getChild(x).ID().getText(), " already previously defined in parameters")
+                    else:
+                        _paramIDS.append(ctx.getChild(x).ID().getText())
+                    _paramTypes.append(ctx.getChild(x).parameterType().getText())                
+                except:
+                    pass
+            
+                hashtable[classScope][actualScope] = {}
+                hashtable[classScope][actualScope][actualScope] = SymbolInTable(_name, _type, "function", _name, LocalOffset, None, _paramTypes)
+                #print(hashtable[classScope][actualScope][actualScope].getAll())
+        except:
+            pass
         
-        hashtable[classScope][actualScope] = {}
-        hashtable[classScope][actualScope][actualScope] = SymbolInTable(_name, _type, "function", _name, LocalOffset, None, _paramTypes)
-        #print(hashtable[classScope][actualScope][actualScope].getAll())
 
     def exitMethodDeclaration(self, ctx: DecafParser.MethodDeclarationContext):
         global numberDepth
@@ -102,7 +104,7 @@ class DecafWalker(DecafListener):
 
     def enterExpression_location(self, ctx: DecafParser.Expression_locationContext):
         try:
-            print(ctx.location().getText())
+            #print(ctx.location().getText())
             pass
         except:
             pass
@@ -124,9 +126,11 @@ class DecafWalker(DecafListener):
 
     def enterVarType_struct(self, ctx: DecafParser.VarType_structContext):
         global classScope
-        _name = "struct " + ctx.ID().getText()
-
-        print(hashtable[classScope][_name])
+        try:
+            _type = "struct " + ctx.ID().getText()
+            _definitionStruct = hashtable[classScope][_type]
+        except:
+            print("Struct struct", ctx.ID().getText() ,"is not defined")
 
     def enterVarDeclaration_ID(self, ctx: DecafParser.VarDeclaration_IDContext):        
         global offset
@@ -142,9 +146,9 @@ class DecafWalker(DecafListener):
                 except:
                     _type = ctx.varType().getText()
                 Localoffset += typeTable[_type][0]
-                _defalutValue = typeTable[_type][1]
+                _defaultValue = typeTable[_type][1]
                 if(_name not in hashtable[actualScope]):
-                    hashtable[actualScope][_name] = SymbolInTable(_name, _type, "variable", actualScope, Localoffset, _defalutValue, None)
+                    hashtable[actualScope][_name] = SymbolInTable(_name, _type, "variable", actualScope, Localoffset, _defaultValue, None)
                 else:
                     print("Variable ", _name, " type ", _type, " already defined in scope ", actualScope)
                     errors.append("Variable ", _name, " type ", _type,  " already defined", actualScope)
@@ -153,10 +157,14 @@ class DecafWalker(DecafListener):
                 Localoffset = offset
                 _name = ctx.ID().getText()
                 _type = ctx.varType().getText()
-                Localoffset += typeTable[_type][0]
-                _defalutValue = typeTable[_type][1]
+                if("struct" in _type):
+                    _type = "struct " + ctx.varType().ID().getText()                    
+                    _defaultValue = hashtable[classScope][_type]
+                else:
+                    Localoffset += typeTable[_type][0]
+                    _defaultValue = typeTable[_type][1]                
                 if(_name not in hashtable[classScope][actualScope]):
-                    hashtable[classScope][actualScope][_name] = SymbolInTable(_name, _type, "variable", actualScope, Localoffset, _defalutValue, None)
+                    hashtable[classScope][actualScope][_name] = SymbolInTable(_name, _type, "variable", actualScope, Localoffset, _defaultValue, None)
                 else: 
                     print("Variable ", _name, " type ", _type,  " already defined in scope ", actualScope)
                     errors.append("Variable ", _name, " type ", _type,  " already defined", actualScope)
@@ -199,8 +207,7 @@ class DecafWalker(DecafListener):
 
     def enterStatement_if(self, ctx: DecafParser.Statement_ifContext):
         try:
-            pass
-            #print("If Condition:", ctx.expression().getText())
+            print("If Condition:", ctx.expression().getText())
         except:
             pass
     
@@ -313,7 +320,7 @@ class SymbolInTable():
         self.value = value
 
 def main():
-    input_stream = FileStream('param.txt')
+    input_stream = FileStream('fact_array.txt')
     lexer = DecafLexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = DecafParser(stream)

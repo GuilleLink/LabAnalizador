@@ -77,9 +77,9 @@ statement           : 'if' '(' expression ')' block ('else' block)?             
                     | 'return' expression ';'                                      #statement_return
                     | methodCall ';'                                               #statement_methodCall
                     | block                                                        #statement_block
-                    | location '=' expression                                      #statement_assignValue
-                    | location '+=' expression                                     #statement_increment
-                    | location '-=' expression                                     #statement_decrement
+                    | location '=' expression ';'                                  #statement_assignValue
+                    | location '+=' expression ';'                                 #statement_increment
+                    | location '-=' expression ';'                                 #statement_decrement
                     | (expression)? ';'                                            #statement_expression
                     ;
 

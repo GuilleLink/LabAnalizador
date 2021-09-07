@@ -12,11 +12,10 @@ struct B
 	struct A c;
 };
 
-struct A y;
-struct A z;
-
 void main(void)
 {
+	struct A x;
+	struct A z;
 	struct B y[5];
 	int i;
 	int j;
